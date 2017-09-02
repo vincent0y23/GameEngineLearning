@@ -1,4 +1,5 @@
 ﻿using System;
+using RunTime.Windows;
 
 namespace RunTime
 {
@@ -6,7 +7,10 @@ namespace RunTime
 	{
 		public void Run()
 		{
-            Console.WriteLine("engine run ");
+			Console.WriteLine("engine run ");
+			WindowD2D window = new WindowD2D();
+			window.Run();
+			Console.WriteLine("end");
 		}
 	}
 }
