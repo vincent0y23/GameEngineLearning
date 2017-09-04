@@ -41,6 +41,9 @@ namespace RunTime.Windows
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
 		private HandleRegisterClassEx RegisterClassEx;
 
+		private delegate int HandleGetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax);
+		private HandleGetMessage GetMessageProc;
+
 		private User32()
 			: base("User32.dll")
 		{
@@ -50,6 +53,7 @@ namespace RunTime.Windows
 			RegisterClassEx = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
 			_showWindow = LoadFunction<HandleShowWindow>("ShowWindow");
 			_updateWindow = LoadFunction<HandleUpdateWindow>("UpdateWindow");
+			GetMessageProc = LoadFunction<HandleGetMessage>("GetMessageW");
 		}
 
 		public static User32Window CreateWindowEx(
@@ -102,6 +106,11 @@ namespace RunTime.Windows
 		public static void UpdateWindow(User32Window window)
 		{
 			_instance._updateWindow(window);
+		}
+
+		public static int GetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax)
+		{
+			return _instance.GetMessageProc(ref lpMsg, hwnd, wMsgFilterMin, wMsgFilterMax);
 		}
 
 		private IntPtr myWndProc(HWND hWnd, int msg, int wParam, int lParam)

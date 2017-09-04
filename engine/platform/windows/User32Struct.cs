@@ -37,4 +37,20 @@ namespace RunTime.Windows
 		public string lpszClassName;
 		public IntPtr hIconSm;
 	}
+
+	public struct POINT 
+	{
+		public int x;
+		public int y;
+	}
+
+	public struct MSG 
+	{
+		public HWND hwnd;
+		public int message;
+		public int wParam;
+		public int lParam;
+		public int time;
+		public POINT pt;
+	}
 }
