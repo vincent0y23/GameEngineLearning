@@ -35,6 +35,7 @@ namespace RunTime.Windows
 
 		private delegate IntPtr HandleDefWindowProc(HWND hwnd, int wMsg, int wParam, int lParam);
 		private HandleDefWindowProc DefWindowProc;
+		private HandleDefWindowProc _myWindowProc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
 		private HandleLoadCursor LoadCursor;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
@@ -66,6 +67,7 @@ namespace RunTime.Windows
 			[MarshalAs(UnmanagedType.AsAny)] object pvParam//指向窗口的创建数据
 		)
 		{
+			_instance._myWindowProc = _instance.myWndProc;
 			WNDCLASSEX wind_class = new WNDCLASSEX();
 			wind_class.cbSize = Marshal.SizeOf(typeof(WNDCLASSEX));
 			wind_class.style = (int)(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS); //Doubleclicks are active
@@ -77,7 +79,7 @@ namespace RunTime.Windows
 			wind_class.hCursor = _instance.LoadCursor(IntPtr.Zero, (int)IDC_CROSS);// Crosshair cursor;
 			wind_class.lpszMenuName = null;
 			wind_class.lpszClassName = "myClass";
-			wind_class.lpfnWndProc = _instance.DefWindowProc(IntPtr.Zero, 0, 0, 0);
+			wind_class.lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_instance._myWindowProc);
 			wind_class.hIconSm = IntPtr.Zero;
 			ushort regResult = _instance.RegisterClassEx(ref wind_class);
 
@@ -100,6 +102,29 @@ namespace RunTime.Windows
 		public static void UpdateWindow(User32Window window)
 		{
 			_instance._updateWindow(window);
+		}
+
+		private IntPtr myWndProc(HWND hWnd, int msg, int wParam, int lParam)
+		{
+			switch (msg)
+			{
+				// All GUI painting must be done here
+				case WM_PAINT:
+					break;
+
+				case WM_LBUTTONDBLCLK:
+					break;
+
+				case WM_DESTROY:
+
+					//If you want to shutdown the application, call the next function instead of DestroyWindow
+					//PostQuitMessage(0);
+					break;
+
+				default:
+					break;
+			}
+			return _instance.DefWindowProc(hWnd, msg, wParam, lParam);
 		}
 
 		#region const value
