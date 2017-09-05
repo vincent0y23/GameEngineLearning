@@ -17,10 +17,10 @@ namespace RunTime.Windows
 			}
 			else
 			{
-				
-				while (User32.GetMessage(ref _tempMsg,IntPtr.Zero,0,0) > 0)
+				while (User32.GetMessage(ref _tempMsg, IntPtr.Zero, 0, 0) > 0)
 				{
-					Thread.Sleep(10);
+					User32.TranslateMessage(ref _tempMsg);
+					User32.DispatchMessage(ref _tempMsg);
 				}
 			}
 		}

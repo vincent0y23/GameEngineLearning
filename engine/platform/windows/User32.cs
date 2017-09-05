@@ -43,6 +43,10 @@ namespace RunTime.Windows
 
 		private delegate int HandleGetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax);
 		private HandleGetMessage GetMessageProc;
+		private delegate int HandleTranslateMessage(ref MSG lpMsg);
+		private HandleTranslateMessage TranslateMessageProc;
+		private delegate int HandleDispatchMessage(ref MSG lpMsg);
+		private HandleDispatchMessage DispatchMessageProc;
 
 		private User32()
 			: base("User32.dll")
@@ -54,6 +58,8 @@ namespace RunTime.Windows
 			_showWindow = LoadFunction<HandleShowWindow>("ShowWindow");
 			_updateWindow = LoadFunction<HandleUpdateWindow>("UpdateWindow");
 			GetMessageProc = LoadFunction<HandleGetMessage>("GetMessageW");
+			TranslateMessageProc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
+			DispatchMessageProc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
 		}
 
 		public static User32Window CreateWindowEx(
@@ -111,6 +117,16 @@ namespace RunTime.Windows
 		public static int GetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax)
 		{
 			return _instance.GetMessageProc(ref lpMsg, hwnd, wMsgFilterMin, wMsgFilterMax);
+		}
+
+		public static int TranslateMessage(ref MSG lpMsg)
+		{
+			return _instance.TranslateMessageProc(ref lpMsg);
+		}
+
+		public static int DispatchMessage(ref MSG lpMsg)
+		{
+			return _instance.DispatchMessageProc(ref lpMsg);
 		}
 
 		private IntPtr myWndProc(HWND hWnd, int msg, int wParam, int lParam)
