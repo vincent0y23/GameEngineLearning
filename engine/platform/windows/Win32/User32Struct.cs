@@ -3,11 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace RunTime.Windows
 {
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 	public struct WNDCLASSEX
 	{
-		[MarshalAs(UnmanagedType.U4)]
 		public int cbSize;
-		[MarshalAs(UnmanagedType.U4)]
 		public int style;
 		public IntPtr lpfnWndProc; // not WndProc
 		public int cbClsExtra;
@@ -16,18 +15,20 @@ namespace RunTime.Windows
 		public IntPtr hIcon;
 		public IntPtr hCursor;
 		public IntPtr hbrBackground;
+		[MarshalAs(UnmanagedType.LPWStr)]
 		public string lpszMenuName;
+		[MarshalAs(UnmanagedType.LPWStr)]
 		public string lpszClassName;
 		public IntPtr hIconSm;
 	}
 
-	public struct POINT 
+	public struct POINT
 	{
 		public int x;
 		public int y;
 	}
 
-	public struct MSG 
+	public struct MSG
 	{
 		public IntPtr hwnd;
 		public int message;

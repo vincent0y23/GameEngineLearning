@@ -36,7 +36,7 @@ namespace RunTime.Windows
 				return;
 			}
 
-			_window = User32.CreateWindowEx(0, atom, "test", User32.WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, 
+			_window = User32.CreateWindowEx(0, _className, "test", User32.WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, 
 				IntPtr.Zero, IntPtr.Zero, windClass.hInstance, null);
 			if (_window == IntPtr.Zero)
 			{

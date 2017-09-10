@@ -7,37 +7,37 @@ namespace RunTime.Windows.Win32
 	{
 		private static User32 _instance = new User32();
 
-		private delegate IntPtr HandleCreateWindowEx(int dwExStyle, ushort atom, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
+		private delegate IntPtr HandleCreateWindowEx(int dwExStyle, [MarshalAs(UnmanagedType.LPWStr)]string lpClassName, [MarshalAs(UnmanagedType.LPWStr)]string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
 		private HandleCreateWindowEx _createWindowExFunc;
-		private delegate int HandleShowWindow(IntPtr IntPtr, int nCmdShow);
-		private HandleShowWindow _showWindowFunc;
-		private delegate int HandleUpdateWindow(IntPtr IntPtr);
-		private HandleUpdateWindow _updateWindowFunc;
 		public delegate IntPtr HandleDefWindowProc(IntPtr IntPtr, int wMsg, int wParam, int lParam);
 		private HandleDefWindowProc _defWindowProcFunc;
+		private delegate int HandleDispatchMessage(ref MSG lpMsg);
+		private HandleDispatchMessage _dispatchMessageFunc;
+		private delegate int HandleGetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax);
+		private HandleGetMessage _getMessageFunc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
 		private HandleLoadCursor _loadCursorFunc;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
 		private HandleRegisterClassEx _registerClassExFunc;
-		private delegate int HandleGetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax);
-		private HandleGetMessage _getMessageFunc;
+		private delegate int HandleShowWindow(IntPtr IntPtr, int nCmdShow);
+		private HandleShowWindow _showWindowFunc;
 		private delegate int HandleTranslateMessage(ref MSG lpMsg);
 		private HandleTranslateMessage _translateMessageFunc;
-		private delegate int HandleDispatchMessage(ref MSG lpMsg);
-		private HandleDispatchMessage _dispatchMessageFunc;
-
+		private delegate int HandleUpdateWindow(IntPtr IntPtr);
+		private HandleUpdateWindow _updateWindowFunc;
+		
 		private User32()
 			: base("User32.dll")
 		{
 			_createWindowExFunc = LoadFunction<HandleCreateWindowEx>("CreateWindowExW");
 			_defWindowProcFunc = LoadFunction<HandleDefWindowProc>("DefWindowProcW");
+			_dispatchMessageFunc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
+			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
 			_loadCursorFunc = LoadFunction<HandleLoadCursor>("LoadCursorW");
 			_registerClassExFunc = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
 			_showWindowFunc = LoadFunction<HandleShowWindow>("ShowWindow");
-			_updateWindowFunc = LoadFunction<HandleUpdateWindow>("UpdateWindow");
-			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
 			_translateMessageFunc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
-			_dispatchMessageFunc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
+			_updateWindowFunc = LoadFunction<HandleUpdateWindow>("UpdateWindow");
 		}
 
 		public static int SizeOf(Type t)
@@ -55,9 +55,9 @@ namespace RunTime.Windows.Win32
 			return Marshal.GetLastWin32Error();
 		}
 
-		public static IntPtr CreateWindowEx(int dwExStyle, ushort atom, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam)
+		public static IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam)
 		{
-			return _instance._createWindowExFunc(dwExStyle, atom, lpszWindowName, style, x, y, width, height,
+			return _instance._createWindowExFunc(dwExStyle, lpClassName, lpszWindowName, style, x, y, width, height,
 				IntPtrParent, hMenu, hInst, pvParam);
 		}
 
