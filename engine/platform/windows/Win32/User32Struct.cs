@@ -1,26 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-using HANDLE = System.IntPtr;
-using HWND = System.IntPtr;
-using HDC = System.IntPtr;
-
 namespace RunTime.Windows
 {
-	public struct User32Window
-	{
-		public readonly IntPtr Handle;
-
-		public User32Window(IntPtr pointer)
-		{
-			Handle = pointer;
-		}
-
-		public static implicit operator IntPtr(User32Window window) { return window.Handle; }
-		public static implicit operator User32Window(IntPtr pointer) { return new User32Window(pointer); }
-	}
-
-	struct WNDCLASSEX
+	public struct WNDCLASSEX
 	{
 		[MarshalAs(UnmanagedType.U4)]
 		public int cbSize;
@@ -46,7 +29,7 @@ namespace RunTime.Windows
 
 	public struct MSG 
 	{
-		public HWND hwnd;
+		public IntPtr hwnd;
 		public int message;
 		public int wParam;
 		public int lParam;

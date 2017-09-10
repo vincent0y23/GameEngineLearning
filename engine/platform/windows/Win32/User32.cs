@@ -1,155 +1,104 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-using HANDLE = System.IntPtr;
-using HWND = System.IntPtr;
-using HDC = System.IntPtr;
-
-namespace RunTime.Windows
+namespace RunTime.Windows.Win32
 {
 	public class User32 : WindowsDll
 	{
 		private static User32 _instance = new User32();
 
-		private delegate User32Window HandleCreateWindowEx(
-			int dwExStyle,                                //窗口的扩展风格
-			UInt16 lpszClassName,                         //指向注册类名的指针
-			string lpszWindowName,                        //指向窗口名称的指针
-			int style,                                    //窗口风格
-			int x,                                        //窗口的水平位置
-			int y,                                        //窗口的垂直位置
-			int width,                                    //窗口的宽度
-			int height,                                   //窗口的高度
-			IntPtr hWndParent,                            //父窗口的句柄
-			IntPtr hMenu,                                 //菜单的句柄或是子窗口的标识符
-			IntPtr hInst,                                 //应用程序实例的句柄); 
-			[MarshalAs(UnmanagedType.AsAny)] object pvParam//指向窗口的创建数据
-			);
-		private HandleCreateWindowEx CreateWindowExFunc;
-
-		private delegate int HandleShowWindow(HWND hwnd, int nCmdShow);
-		private HandleShowWindow _showWindow;
-		private delegate int HandleUpdateWindow(HWND hwnd);
-		private HandleUpdateWindow _updateWindow;
-
-		private delegate IntPtr HandleDefWindowProc(HWND hwnd, int wMsg, int wParam, int lParam);
-		private HandleDefWindowProc DefWindowProc;
-		private HandleDefWindowProc _myWindowProc;
+		private delegate IntPtr HandleCreateWindowEx(int dwExStyle, ushort atom, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
+		private HandleCreateWindowEx _createWindowExFunc;
+		private delegate int HandleShowWindow(IntPtr IntPtr, int nCmdShow);
+		private HandleShowWindow _showWindowFunc;
+		private delegate int HandleUpdateWindow(IntPtr IntPtr);
+		private HandleUpdateWindow _updateWindowFunc;
+		public delegate IntPtr HandleDefWindowProc(IntPtr IntPtr, int wMsg, int wParam, int lParam);
+		private HandleDefWindowProc _defWindowProcFunc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
-		private HandleLoadCursor LoadCursor;
+		private HandleLoadCursor _loadCursorFunc;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
-		private HandleRegisterClassEx RegisterClassEx;
-
-		private delegate int HandleGetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax);
-		private HandleGetMessage GetMessageProc;
+		private HandleRegisterClassEx _registerClassExFunc;
+		private delegate int HandleGetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax);
+		private HandleGetMessage _getMessageFunc;
 		private delegate int HandleTranslateMessage(ref MSG lpMsg);
-		private HandleTranslateMessage TranslateMessageProc;
+		private HandleTranslateMessage _translateMessageFunc;
 		private delegate int HandleDispatchMessage(ref MSG lpMsg);
-		private HandleDispatchMessage DispatchMessageProc;
+		private HandleDispatchMessage _dispatchMessageFunc;
 
 		private User32()
 			: base("User32.dll")
 		{
-			CreateWindowExFunc = LoadFunction<HandleCreateWindowEx>("CreateWindowExW");
-			DefWindowProc = LoadFunction<HandleDefWindowProc>("DefWindowProcW");
-			LoadCursor = LoadFunction<HandleLoadCursor>("LoadCursorW");
-			RegisterClassEx = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
-			_showWindow = LoadFunction<HandleShowWindow>("ShowWindow");
-			_updateWindow = LoadFunction<HandleUpdateWindow>("UpdateWindow");
-			GetMessageProc = LoadFunction<HandleGetMessage>("GetMessageW");
-			TranslateMessageProc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
-			DispatchMessageProc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
+			_createWindowExFunc = LoadFunction<HandleCreateWindowEx>("CreateWindowExW");
+			_defWindowProcFunc = LoadFunction<HandleDefWindowProc>("DefWindowProcW");
+			_loadCursorFunc = LoadFunction<HandleLoadCursor>("LoadCursorW");
+			_registerClassExFunc = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
+			_showWindowFunc = LoadFunction<HandleShowWindow>("ShowWindow");
+			_updateWindowFunc = LoadFunction<HandleUpdateWindow>("UpdateWindow");
+			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
+			_translateMessageFunc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
+			_dispatchMessageFunc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
 		}
 
-		public static User32Window CreateWindowEx(
-			int dwExStyle,                                //窗口的扩展风格
-			string lpszClassName,                         //指向注册类名的指针
-			string lpszWindowName,                        //指向窗口名称的指针
-			int style,                                    //窗口风格
-			int x,                                        //窗口的水平位置
-			int y,                                        //窗口的垂直位置
-			int width,                                    //窗口的宽度
-			int height,                                   //窗口的高度
-			IntPtr hWndParent,                            //父窗口的句柄
-			IntPtr hMenu,                                 //菜单的句柄或是子窗口的标识符
-			IntPtr hInst,                                 //应用程序实例的句柄); 
-			[MarshalAs(UnmanagedType.AsAny)] object pvParam//指向窗口的创建数据
-		)
+		public static int SizeOf(Type t)
 		{
-			_instance._myWindowProc = _instance.myWndProc;
-			WNDCLASSEX wind_class = new WNDCLASSEX();
-			wind_class.cbSize = Marshal.SizeOf(typeof(WNDCLASSEX));
-			wind_class.style = (int)(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS); //Doubleclicks are active
-			wind_class.hbrBackground = (IntPtr)COLOR_BACKGROUND + 1; //Black background, +1 is necessary
-			wind_class.cbClsExtra = 0;
-			wind_class.cbWndExtra = 0;
-			wind_class.hInstance = Process.GetCurrentProcess().Handle; ;// alternative: Process.GetCurrentProcess().Handle;
-			wind_class.hIcon = IntPtr.Zero;
-			wind_class.hCursor = _instance.LoadCursor(IntPtr.Zero, (int)IDC_CROSS);// Crosshair cursor;
-			wind_class.lpszMenuName = null;
-			wind_class.lpszClassName = "myClass";
-			wind_class.lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_instance._myWindowProc);
-			wind_class.hIconSm = IntPtr.Zero;
-			ushort regResult = _instance.RegisterClassEx(ref wind_class);
-
-			if (regResult == 0)
-				return IntPtr.Zero;
-
-			string wndClass = wind_class.lpszClassName;
-			//This version worked and resulted in a non-zero hWnd
-			IntPtr hWnd = _instance.CreateWindowExFunc(0, regResult, "Hello Win32", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-				0, 0, 300, 400, IntPtr.Zero, IntPtr.Zero, wind_class.hInstance, IntPtr.Zero);
-
-			return hWnd;
+			return Marshal.SizeOf(t);
 		}
 
-		public static void ShowWindow(User32Window window)
+		public static IntPtr GetFunctionPointerForDelegate(Delegate d)
 		{
-			_instance._showWindow(window, 1);
+			return Marshal.GetFunctionPointerForDelegate(d);
 		}
 
-		public static void UpdateWindow(User32Window window)
+		public static int GetLastError()
 		{
-			_instance._updateWindow(window);
+			return Marshal.GetLastWin32Error();
 		}
 
-		public static int GetMessage(ref MSG lpMsg, HWND hwnd, int wMsgFilterMin, int wMsgFilterMax)
+		public static IntPtr CreateWindowEx(int dwExStyle, ushort atom, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr IntPtrParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam)
 		{
-			return _instance.GetMessageProc(ref lpMsg, hwnd, wMsgFilterMin, wMsgFilterMax);
+			return _instance._createWindowExFunc(dwExStyle, atom, lpszWindowName, style, x, y, width, height,
+				IntPtrParent, hMenu, hInst, pvParam);
 		}
 
-		public static int TranslateMessage(ref MSG lpMsg)
+		public static IntPtr DefWindowProc(IntPtr IntPtr, int wMsg, int wParam, int lParam)
 		{
-			return _instance.TranslateMessageProc(ref lpMsg);
+			return _instance._defWindowProcFunc(IntPtr, wMsg, wParam, lParam);
 		}
 
 		public static int DispatchMessage(ref MSG lpMsg)
 		{
-			return _instance.DispatchMessageProc(ref lpMsg);
+			return _instance._dispatchMessageFunc(ref lpMsg);
 		}
 
-		private IntPtr myWndProc(HWND hWnd, int msg, int wParam, int lParam)
+		public static int GetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax)
 		{
-			switch (msg)
-			{
-				// All GUI painting must be done here
-				case WM_PAINT:
-					break;
+			return _instance._getMessageFunc(ref lpMsg, IntPtr, wMsgFilterMin, wMsgFilterMax);
+		}
 
-				case WM_LBUTTONDBLCLK:
-					break;
+		public static IntPtr LoadCursor(IntPtr hInstance, int lpCursorName)
+		{
+			return _instance._loadCursorFunc(hInstance, lpCursorName);
+		}
 
-				case WM_DESTROY:
+		public static ushort RegisterClassEx(ref WNDCLASSEX pcWndClassEx)
+		{
+			return _instance._registerClassExFunc(ref pcWndClassEx);
+		}
 
-					//If you want to shutdown the application, call the next function instead of DestroyWindow
-					//PostQuitMessage(0);
-					break;
+		public static void ShowWindow(IntPtr window)
+		{
+			_instance._showWindowFunc(window, 1);
+		}
 
-				default:
-					break;
-			}
-			return _instance.DefWindowProc(hWnd, msg, wParam, lParam);
+		public static int TranslateMessage(ref MSG lpMsg)
+		{
+			return _instance._translateMessageFunc(ref lpMsg);
+		}
+
+		public static void UpdateWindow(IntPtr window)
+		{
+			_instance._updateWindowFunc(window);
 		}
 
 		#region const value
@@ -600,16 +549,16 @@ namespace RunTime.Windows
 		public const int GCW_ATOM = (-32);
 		public const int GWL_EXSTYLE = (-20);
 		public const int GWL_HINSTANCE = (-6);
-		public const int GWL_HWNDPARENT = (-8);
+		public const int GWL_IntPtrPARENT = (-8);
 		public const int GWL_ID = (-12);
 		public const int GWL_STYLE = (-16);
 		public const int GWL_USERDATA = (-21);
 		public const int GWL_WNDPROC = (-4);
 		public const int GW_CHILD = 5;
-		public const int GW_HWNDFIRST = 0;
-		public const int GW_HWNDLAST = 1;
-		public const int GW_HWNDNEXT = 2;
-		public const int GW_HWNDPREV = 3;
+		public const int GW_IntPtrFIRST = 0;
+		public const int GW_IntPtrLAST = 1;
+		public const int GW_IntPtrNEXT = 2;
+		public const int GW_IntPtrPREV = 3;
 		public const int GW_MAX = 5;
 		public const int GW_OWNER = 4;
 		public const int HCBT_ACTIVATE = 5;
@@ -676,29 +625,29 @@ namespace RunTime.Windows
 		public const int HTTRANSPARENT = (-1);
 		public const int HTVSCROLL = 7;
 		public const int HTZOOM = HTMAXBUTTON;
-		public HWND HWND_BOTTOM
+		public IntPtr IntPtr_BOTTOM
 		{
-			get { return (HWND)1; }
+			get { return (IntPtr)1; }
 		}
-		public HWND HWND_BROADCAST
+		public IntPtr IntPtr_BROADCAST
 		{
-			get { return (HWND)0xFFFF; }
+			get { return (IntPtr)0xFFFF; }
 		}
-		public HWND HWND_DESKTOP
+		public IntPtr IntPtr_DESKTOP
 		{
-			get { return (HWND)0; }
+			get { return (IntPtr)0; }
 		}
-		public HWND HWND_TOP
+		public IntPtr IntPtr_TOP
 		{
-			get { return (HWND)0; }
+			get { return (IntPtr)0; }
 		}
-		public HWND HWND_NOTOPMOST
+		public IntPtr IntPtr_NOTOPMOST
 		{
-			get { return (HWND)(-2); }
+			get { return (IntPtr)(-2); }
 		}
-		public HWND HWND_TOPMOST
+		public IntPtr IntPtr_TOPMOST
 		{
-			get { return (HWND)(-2); }
+			get { return (IntPtr)(-2); }
 		}
 		public const int IDABORT = 3;
 		public const int IDCANCEL = 2;
