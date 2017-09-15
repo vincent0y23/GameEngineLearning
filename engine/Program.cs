@@ -8,7 +8,7 @@ namespace RunTime
 		public void Run()
 		{
 			Console.WriteLine("engine run ");
-			WindowD2D window = new WindowD2D();
+			HelloEngineD3D window = new HelloEngineD3D();
 			window.Run();
 			Console.WriteLine("end");
 		}
