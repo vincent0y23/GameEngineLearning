@@ -13,10 +13,16 @@ namespace RunTime.Windows.Win32
 		private HandleDefWindowProc _defWindowProcFunc;
 		private delegate int HandleDispatchMessage(ref MSG lpMsg);
 		private HandleDispatchMessage _dispatchMessageFunc;
+		private delegate int HandleGetClientRect(IntPtr hwnd, ref RECT lpRect);
+		private HandleGetClientRect _getClientRectFunc;
 		private delegate int HandleGetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax);
 		private HandleGetMessage _getMessageFunc;
+		private delegate int HandleInvalidateRect(IntPtr hwnd, ref RECT lpRect, int bErase);
+		private HandleInvalidateRect _invalidateRectFunc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
 		private HandleLoadCursor _loadCursorFunc;
+		private delegate void HandlePostQuitMessage(int nExitCode);
+		private HandlePostQuitMessage _postQuitMessageFunc;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
 		private HandleRegisterClassEx _registerClassExFunc;
 		private delegate int HandleShowWindow(IntPtr IntPtr, int nCmdShow);
@@ -32,8 +38,11 @@ namespace RunTime.Windows.Win32
 			_createWindowExFunc = LoadFunction<HandleCreateWindowEx>("CreateWindowExW");
 			_defWindowProcFunc = LoadFunction<HandleDefWindowProc>("DefWindowProcW");
 			_dispatchMessageFunc = LoadFunction<HandleDispatchMessage>("DispatchMessageW");
+			_getClientRectFunc = LoadFunction<HandleGetClientRect>("GetClientRect");
 			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
+			_invalidateRectFunc = LoadFunction<HandleInvalidateRect>("InvalidateRect");
 			_loadCursorFunc = LoadFunction<HandleLoadCursor>("LoadCursorW");
+			_postQuitMessageFunc = LoadFunction<HandlePostQuitMessage>("PostQuitMessage");
 			_registerClassExFunc = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
 			_showWindowFunc = LoadFunction<HandleShowWindow>("ShowWindow");
 			_translateMessageFunc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
@@ -71,14 +80,29 @@ namespace RunTime.Windows.Win32
 			return _instance._dispatchMessageFunc(ref lpMsg);
 		}
 
+		public static int GetClientRect(IntPtr hwnd, ref RECT lpRect)
+		{
+			return _instance._getClientRectFunc(hwnd, ref lpRect);
+		}
+
 		public static int GetMessage(ref MSG lpMsg, IntPtr IntPtr, int wMsgFilterMin, int wMsgFilterMax)
 		{
 			return _instance._getMessageFunc(ref lpMsg, IntPtr, wMsgFilterMin, wMsgFilterMax);
 		}
 
+		public static int InvalidateRect(IntPtr hwnd, ref RECT lpRect, int bErase)
+		{
+			return _instance._invalidateRectFunc(hwnd, ref lpRect, bErase);
+		}
+
 		public static IntPtr LoadCursor(IntPtr hInstance, int lpCursorName)
 		{
 			return _instance._loadCursorFunc(hInstance, lpCursorName);
+		}
+
+		public static void PostQuitMessage(int nExitCode)
+		{
+			_instance._postQuitMessageFunc(nExitCode);
 		}
 
 		public static ushort RegisterClassEx(ref WNDCLASSEX pcWndClassEx)
@@ -1524,6 +1548,7 @@ namespace RunTime.Windows.Win32
 		public const int WM_WINDOWPOSCHANGED = 0x47;
 		public const int WM_WINDOWPOSCHANGING = 0x46;
 		public const int WM_WININICHANGE = 0x1A;
+		public const int WM_DISPLAYCHANGE = 0x7E;
 		public const int WPF_RESTORETOMAXIMIZED = 0x2;
 		public const int WPF_SETMINPOSITION = 0x1;
 		public const int WRITE = 1;

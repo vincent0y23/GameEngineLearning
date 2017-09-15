@@ -4,7 +4,7 @@ using RunTime.Windows.Win32;
 
 namespace RunTime.Windows
 {
-	public class WindowD2D
+	public class HelloEngineWin
 	{
 		private IntPtr _window;
 		private MSG _tempMsg;
@@ -66,9 +66,8 @@ namespace RunTime.Windows
 					break;
 
 				case User32.WM_DESTROY:
-
-					//If you want to shutdown the application, call the next function instead of DestroyWindow
-					//PostQuitMessage(0);
+					
+					User32.PostQuitMessage(0);
 					break;
 
 				default:

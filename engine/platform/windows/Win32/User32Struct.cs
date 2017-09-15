@@ -22,12 +22,14 @@ namespace RunTime.Windows
 		public IntPtr hIconSm;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
 	public struct POINT
 	{
 		public int x;
 		public int y;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
 	public struct MSG
 	{
 		public IntPtr hwnd;
@@ -36,5 +38,14 @@ namespace RunTime.Windows
 		public int lParam;
 		public int time;
 		public POINT pt;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct RECT
+	{
+		public int left;
+		public int top;
+		public int right;
+		public int bottom;
 	}
 }
