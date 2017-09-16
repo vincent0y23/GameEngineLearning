@@ -8,8 +8,9 @@ namespace RunTime
 		public void Run()
 		{
 			Console.WriteLine("engine run ");
-			HelloEngineD3D window = new HelloEngineD3D();
-			window.Run();
+			HelloEngineWin window = new HelloEngineWin();
+			window.Show();
+			RenderLoop.Run(window.Window, null);
 			Console.WriteLine("end");
 		}
 	}

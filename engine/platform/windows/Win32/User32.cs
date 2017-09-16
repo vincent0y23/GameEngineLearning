@@ -21,6 +21,8 @@ namespace RunTime.Windows.Win32
 		private HandleInvalidateRect _invalidateRectFunc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
 		private HandleLoadCursor _loadCursorFunc;
+		private delegate int HandlePeekMessage(ref MSG lpMsg, IntPtr hwnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg);
+		private HandlePeekMessage _peekMessageFunc;
 		private delegate void HandlePostQuitMessage(int nExitCode);
 		private HandlePostQuitMessage _postQuitMessageFunc;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
@@ -42,6 +44,7 @@ namespace RunTime.Windows.Win32
 			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
 			_invalidateRectFunc = LoadFunction<HandleInvalidateRect>("InvalidateRect");
 			_loadCursorFunc = LoadFunction<HandleLoadCursor>("LoadCursorW");
+			_peekMessageFunc = LoadFunction<HandlePeekMessage>("PeekMessageW");
 			_postQuitMessageFunc = LoadFunction<HandlePostQuitMessage>("PostQuitMessage");
 			_registerClassExFunc = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
 			_showWindowFunc = LoadFunction<HandleShowWindow>("ShowWindow");
@@ -98,6 +101,11 @@ namespace RunTime.Windows.Win32
 		public static IntPtr LoadCursor(IntPtr hInstance, int lpCursorName)
 		{
 			return _instance._loadCursorFunc(hInstance, lpCursorName);
+		}
+
+		public static int PeekMessage(ref MSG lpMsg, IntPtr hwnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg)
+		{
+			return _instance._peekMessageFunc(ref lpMsg, hwnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 		}
 
 		public static void PostQuitMessage(int nExitCode)

@@ -10,7 +10,9 @@ namespace RunTime.Windows
 		private MSG _tempMsg;
 		private string _className = "myclass";
 
-		public void Run()
+		public IntPtr Window { get { return _window; } }
+
+		public void Show()
 		{
 			WNDCLASSEX windClass = new WNDCLASSEX
 			{
@@ -36,7 +38,7 @@ namespace RunTime.Windows
 				return;
 			}
 
-			_window = User32.CreateWindowEx(0, _className, "test", User32.WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, 
+			_window = User32.CreateWindowEx(0, _className, "test", User32.WS_OVERLAPPEDWINDOW, 100, 100, 800, 600,
 				IntPtr.Zero, IntPtr.Zero, windClass.hInstance, null);
 			if (_window == IntPtr.Zero)
 			{
@@ -46,6 +48,11 @@ namespace RunTime.Windows
 			}
 
 			User32.ShowWindow(_window);
+		}
+
+		public void Run()
+		{
+			Show();
 
 			while (User32.GetMessage(ref _tempMsg, IntPtr.Zero, 0, 0) > 0)
 			{
@@ -61,15 +68,11 @@ namespace RunTime.Windows
 				// All GUI painting must be done here
 				case User32.WM_PAINT:
 					break;
-
 				case User32.WM_LBUTTONDBLCLK:
 					break;
-
 				case User32.WM_DESTROY:
-					
 					User32.PostQuitMessage(0);
 					break;
-
 				default:
 					break;
 			}

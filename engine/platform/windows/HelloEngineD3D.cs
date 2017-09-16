@@ -15,6 +15,20 @@ namespace RunTime.Windows
 {
 	public class HelloEngineD3D
 	{
+		// vertex buffer structure
+		public struct Vertex
+		{
+			public static readonly int SizeInBytes = Utilities.SizeOf<Vertex>();
+			public Vector4 Position;
+			public Vector4 Color;
+
+			public Vertex(Vector4 position,Vector4 color)
+			{
+				Position = position;
+				Color = color;
+			}
+		}
+
 		private IntPtr _window;
 		private MSG _tempMsg;
 		private string _className = "myclass";
@@ -189,15 +203,15 @@ namespace RunTime.Windows
 				_deviceContext.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
 				// InitGraphics  creates the shape to render
-				Vector4[] vertices = new[]
+				Vertex[] vertices = new[]
 								  {
-									  new Vector4(0.0f, 0.5f, 0.5f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-									  new Vector4(0.5f, -0.5f, 0.5f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-									  new Vector4(-0.5f, -0.5f, 0.5f, 1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f)
+									  new Vertex(new Vector4(0.0f, 0.5f, 0.5f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f)),
+									  new Vertex(new Vector4(0.5f, -0.5f, 0.5f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f)),
+									  new Vertex(new Vector4(-0.5f, -0.5f, 0.5f, 1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f))
 								  };
 				BufferDescription bufferDesc = new BufferDescription()
 				{
-					SizeInBytes = Vector4.SizeInBytes * vertices.Length,
+					SizeInBytes = Vertex.SizeInBytes * vertices.Length,
 					Usage = ResourceUsage.Dynamic,
 					BindFlags = BindFlags.VertexBuffer,
 					CpuAccessFlags = CpuAccessFlags.Write
