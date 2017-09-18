@@ -9,7 +9,7 @@ using Resource = SharpDX.Direct3D12.Resource;
 
 namespace RunTime.Windows
 {
-	public class HelloEngineD3D12Tri
+	public class HelloEngineD3D12Tri : IDisposable
 	{
 		public struct Vertex
 		{
@@ -24,25 +24,25 @@ namespace RunTime.Windows
 		// Pipeline objects.
 		private SwapChain3 _swapChain;
 		private Device _device;
-		private readonly Resource[] renderTargets = new Resource[FrameCount];
-		private CommandAllocator commandAllocator;
-		private CommandQueue commandQueue;
-		private RootSignature rootSignature;
-		private DescriptorHeap renderTargetViewHeap;
-		private PipelineState pipelineState;
-		private GraphicsCommandList commandList;
-		private int rtvDescriptorSize;
+		private readonly Resource[] _renderTargets = new Resource[FrameCount];
+		private CommandAllocator _commandAllocator;
+		private CommandQueue _commandQueue;
+		private RootSignature _rootSignature;
+		private DescriptorHeap _renderTargetViewHeap;
+		private PipelineState _pipelineState;
+		private GraphicsCommandList _commandList;
+		private int _rtvDescriptorSize;
 
 		// App resources.
-		Resource vertexBuffer;
-		VertexBufferView vertexBufferView;
+		private Resource _vertexBuffer;
+		private VertexBufferView _vertexBufferView;
 
 		// Synchronization objects.
-		private int frameIndex;
-		private AutoResetEvent fenceEvent;
+		private int _frameIndex;
+		private AutoResetEvent _fenceEvent;
 
-		private Fence fence;
-		private int fenceValue;
+		private Fence _fence;
+		private int _fenceValue;
 
 		// Initialise pipeline and assets
 		public void Initialize(IntPtr hWnd, int width, int height)
@@ -71,7 +71,7 @@ namespace RunTime.Windows
 			{
 				// Describe and create the command queue.
 				var queueDesc = new CommandQueueDescription(CommandListType.Direct);
-				commandQueue = _device.CreateCommandQueue(queueDesc);
+				_commandQueue = _device.CreateCommandQueue(queueDesc);
 
 
 				// Describe and create the swap chain.
@@ -87,10 +87,10 @@ namespace RunTime.Windows
 					IsWindowed = true
 				};
 
-				var tempSwapChain = new SwapChain(factory, commandQueue, swapChainDesc);
+				var tempSwapChain = new SwapChain(factory, _commandQueue, swapChainDesc);
 				_swapChain = tempSwapChain.QueryInterface<SwapChain3>();
 				tempSwapChain.Dispose();
-				frameIndex = _swapChain.CurrentBackBufferIndex;
+				_frameIndex = _swapChain.CurrentBackBufferIndex;
 			}
 
 			// Create descriptor heaps.
@@ -102,27 +102,27 @@ namespace RunTime.Windows
 				Type = DescriptorHeapType.RenderTargetView
 			};
 
-			renderTargetViewHeap = _device.CreateDescriptorHeap(rtvHeapDesc);
+			_renderTargetViewHeap = _device.CreateDescriptorHeap(rtvHeapDesc);
 
-			rtvDescriptorSize = _device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+			_rtvDescriptorSize = _device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
 
 			// Create frame resources.
-			var rtvHandle = renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
+			var rtvHandle = _renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
 			for (int n = 0; n < FrameCount; n++)
 			{
-				renderTargets[n] = _swapChain.GetBackBuffer<Resource>(n);
-				_device.CreateRenderTargetView(renderTargets[n], null, rtvHandle);
-				rtvHandle += rtvDescriptorSize;
+				_renderTargets[n] = _swapChain.GetBackBuffer<Resource>(n);
+				_device.CreateRenderTargetView(_renderTargets[n], null, rtvHandle);
+				rtvHandle += _rtvDescriptorSize;
 			}
 
-			commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
+			_commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
 		}
 
 		private void LoadAssets()
 		{
 			// Create an empty root signature.
 			var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout);
-			rootSignature = _device.CreateRootSignature(rootSignatureDesc.Serialize());
+			_rootSignature = _device.CreateRootSignature(rootSignatureDesc.Serialize());
 
 			// Create the pipeline state, which includes compiling and loading shaders.
 
@@ -149,7 +149,7 @@ namespace RunTime.Windows
 			var psoDesc = new GraphicsPipelineStateDescription()
 			{
 				InputLayout = new InputLayoutDescription(inputElementDescs),
-				RootSignature = rootSignature,
+				RootSignature = _rootSignature,
 				VertexShader = vertexShader,
 				PixelShader = pixelShader,
 				RasterizerState = RasterizerStateDescription.Default(),
@@ -165,10 +165,10 @@ namespace RunTime.Windows
 			};
 			psoDesc.RenderTargetFormats[0] = SharpDX.DXGI.Format.R8G8B8A8_UNorm;
 
-			pipelineState = _device.CreateGraphicsPipelineState(psoDesc);
+			_pipelineState = _device.CreateGraphicsPipelineState(psoDesc);
 
 			// Create the command list.
-			commandList = _device.CreateCommandList(CommandListType.Direct, commandAllocator, pipelineState);
+			_commandList = _device.CreateCommandList(CommandListType.Direct, _commandAllocator, _pipelineState);
 
 			// Create the vertex buffer.
 			float aspectRatio = _viewport.Width / _viewport.Height;
@@ -187,29 +187,29 @@ namespace RunTime.Windows
 			// recommended. Every time the GPU needs it, the upload heap will be marshalled 
 			// over. Please read up on Default Heap usage. An upload heap is used here for 
 			// code simplicity and because there are very few verts to actually transfer.
-			vertexBuffer = _device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(vertexBufferSize), ResourceStates.GenericRead);
+			_vertexBuffer = _device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(vertexBufferSize), ResourceStates.GenericRead);
 
 			// Copy the triangle data to the vertex buffer.
-			IntPtr pVertexDataBegin = vertexBuffer.Map(0);
+			IntPtr pVertexDataBegin = _vertexBuffer.Map(0);
 			Utilities.Write(pVertexDataBegin, triangleVertices, 0, triangleVertices.Length);
-			vertexBuffer.Unmap(0);
+			_vertexBuffer.Unmap(0);
 
 			// Initialize the vertex buffer view.
-			vertexBufferView = new VertexBufferView();
-			vertexBufferView.BufferLocation = vertexBuffer.GPUVirtualAddress;
-			vertexBufferView.StrideInBytes = Utilities.SizeOf<Vertex>();
-			vertexBufferView.SizeInBytes = vertexBufferSize;
+			_vertexBufferView = new VertexBufferView();
+			_vertexBufferView.BufferLocation = _vertexBuffer.GPUVirtualAddress;
+			_vertexBufferView.StrideInBytes = Utilities.SizeOf<Vertex>();
+			_vertexBufferView.SizeInBytes = vertexBufferSize;
 
 			// Command lists are created in the recording state, but there is nothing
 			// to record yet. The main loop expects it to be closed, so close it now.
-			commandList.Close();
+			_commandList.Close();
 
 			// Create synchronization objects.
-			fence = _device.CreateFence(0, FenceFlags.None);
-			fenceValue = 1;
+			_fence = _device.CreateFence(0, FenceFlags.None);
+			_fenceValue = 1;
 
 			// Create an event handle to use for frame synchronization.
-			fenceEvent = new AutoResetEvent(false);
+			_fenceEvent = new AutoResetEvent(false);
 		}
 
 		private void PopulateCommandList()
@@ -217,37 +217,37 @@ namespace RunTime.Windows
 			// Command list allocators can only be reset when the associated 
 			// command lists have finished execution on the GPU; apps should use 
 			// fences to determine GPU execution progress.
-			commandAllocator.Reset();
+			_commandAllocator.Reset();
 
 			// However, when ExecuteCommandList() is called on a particular command 
 			// list, that command list can then be reset at any time and must be before 
 			// re-recording.
-			commandList.Reset(commandAllocator, pipelineState);
+			_commandList.Reset(_commandAllocator, _pipelineState);
 
 
 			// Set necessary state.
-			commandList.SetGraphicsRootSignature(rootSignature);
-			commandList.SetViewport(_viewport);
-			commandList.SetScissorRectangles(_scissorRect);
+			_commandList.SetGraphicsRootSignature(_rootSignature);
+			_commandList.SetViewport(_viewport);
+			_commandList.SetScissorRectangles(_scissorRect);
 
 			// Indicate that the back buffer will be used as a render target.
-			commandList.ResourceBarrierTransition(renderTargets[frameIndex], ResourceStates.Present, ResourceStates.RenderTarget);
+			_commandList.ResourceBarrierTransition(_renderTargets[_frameIndex], ResourceStates.Present, ResourceStates.RenderTarget);
 
-			var rtvHandle = renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
-			rtvHandle += frameIndex * rtvDescriptorSize;
-			commandList.SetRenderTargets(rtvHandle, null);
+			var rtvHandle = _renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
+			rtvHandle += _frameIndex * _rtvDescriptorSize;
+			_commandList.SetRenderTargets(rtvHandle, null);
 
 			// Record commands.
-			commandList.ClearRenderTargetView(rtvHandle, new Color4(0, 0.2F, 0.4f, 1), 0, null);
+			_commandList.ClearRenderTargetView(rtvHandle, new Color4(0, 0.2F, 0.4f, 1), 0, null);
 
-			commandList.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
-			commandList.SetVertexBuffer(0, vertexBufferView);
-			commandList.DrawInstanced(3, 1, 0, 0);
+			_commandList.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+			_commandList.SetVertexBuffer(0, _vertexBufferView);
+			_commandList.DrawInstanced(3, 1, 0, 0);
 
 			// Indicate that the back buffer will now be used to present.
-			commandList.ResourceBarrierTransition(renderTargets[frameIndex], ResourceStates.RenderTarget, ResourceStates.Present);
+			_commandList.ResourceBarrierTransition(_renderTargets[_frameIndex], ResourceStates.RenderTarget, ResourceStates.Present);
 
-			commandList.Close();
+			_commandList.Close();
 		}
 
 		// Wait the previous command list to finish executing. 
@@ -256,18 +256,18 @@ namespace RunTime.Windows
 			// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE. 
 			// This is code implemented as such for simplicity. 
 
-			int localFence = fenceValue;
-			commandQueue.Signal(this.fence, localFence);
-			fenceValue++;
+			int localFence = _fenceValue;
+			_commandQueue.Signal(this._fence, localFence);
+			_fenceValue++;
 
 			// Wait until the previous frame is finished.
-			if (this.fence.CompletedValue < localFence)
+			if (this._fence.CompletedValue < localFence)
 			{
-				this.fence.SetEventOnCompletion(localFence, fenceEvent.SafeWaitHandle.DangerousGetHandle());
-				fenceEvent.WaitOne();
+				this._fence.SetEventOnCompletion(localFence, _fenceEvent.SafeWaitHandle.DangerousGetHandle());
+				_fenceEvent.WaitOne();
 			}
 
-			frameIndex = _swapChain.CurrentBackBufferIndex;
+			_frameIndex = _swapChain.CurrentBackBufferIndex;
 		}
 
 		public void Render()
@@ -276,7 +276,7 @@ namespace RunTime.Windows
 			PopulateCommandList();
 
 			// Execute the command list.
-			commandQueue.ExecuteCommandList(commandList);
+			_commandQueue.ExecuteCommandList(_commandList);
 
 			// Present the frame.
 			_swapChain.Present(1, 0);
@@ -289,18 +289,18 @@ namespace RunTime.Windows
 			// Wait for the GPU to be done with all resources.
 			WaitForPreviousFrame();
 
-			foreach (var target in renderTargets)
+			foreach (var target in _renderTargets)
 			{
 				target.Dispose();
 			}
-			commandAllocator.Dispose();
-			commandQueue.Dispose();
-			rootSignature.Dispose();
-			renderTargetViewHeap.Dispose();
-			pipelineState.Dispose();
-			commandList.Dispose();
-			vertexBuffer.Dispose();
-			fence.Dispose();
+			_commandAllocator.Dispose();
+			_commandQueue.Dispose();
+			_rootSignature.Dispose();
+			_renderTargetViewHeap.Dispose();
+			_pipelineState.Dispose();
+			_commandList.Dispose();
+			_vertexBuffer.Dispose();
+			_fence.Dispose();
 			_swapChain.Dispose();
 			_device.Dispose();
 		}

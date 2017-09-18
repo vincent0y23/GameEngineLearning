@@ -12,7 +12,7 @@ namespace RunTime.Windows
 
 		public IntPtr Window { get { return _window; } }
 
-		public void Show()
+		public void Show(int x, int y, int width, int height)
 		{
 			WNDCLASSEX windClass = new WNDCLASSEX
 			{
@@ -38,7 +38,7 @@ namespace RunTime.Windows
 				return;
 			}
 
-			_window = User32.CreateWindowEx(0, _className, "test", User32.WS_OVERLAPPEDWINDOW, 100, 100, 800, 600,
+			_window = User32.CreateWindowEx(0, _className, "test", User32.WS_OVERLAPPEDWINDOW, x, y, width, height,
 				IntPtr.Zero, IntPtr.Zero, windClass.hInstance, null);
 			if (_window == IntPtr.Zero)
 			{
@@ -50,9 +50,9 @@ namespace RunTime.Windows
 			User32.ShowWindow(_window);
 		}
 
-		public void Run()
+		public void Run(int x, int y, int width, int height)
 		{
-			Show();
+			Show(x, y, width, height);
 
 			while (User32.GetMessage(ref _tempMsg, IntPtr.Zero, 0, 0) > 0)
 			{
