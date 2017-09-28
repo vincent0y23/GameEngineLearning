@@ -21,19 +21,25 @@ namespace RunTime.Windows.Win32
 		private HandleInvalidateRect _invalidateRectFunc;
 		private delegate IntPtr HandleLoadCursor(IntPtr hInstance, int lpCursorName);
 		private HandleLoadCursor _loadCursorFunc;
+		private delegate IntPtr HandleLoadIcon(IntPtr hInstance, int lpIconName);
+		private HandleLoadIcon _loadIconFunc;
+		private delegate int HandleMessageBox(IntPtr hwnd, string lpText, string lpCaption, int wType);
+		private HandleMessageBox _messageBoxFunc;
 		private delegate int HandlePeekMessage(ref MSG lpMsg, IntPtr hwnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg);
 		private HandlePeekMessage _peekMessageFunc;
 		private delegate void HandlePostQuitMessage(int nExitCode);
 		private HandlePostQuitMessage _postQuitMessageFunc;
 		private delegate ushort HandleRegisterClassEx(ref WNDCLASSEX pcWndClassEx);
 		private HandleRegisterClassEx _registerClassExFunc;
+		private delegate int HandleSetWindowText(IntPtr hwnd, string lpString);
+		private HandleSetWindowText _setWindowTextFunc;
 		private delegate int HandleShowWindow(IntPtr IntPtr, int nCmdShow);
 		private HandleShowWindow _showWindowFunc;
 		private delegate int HandleTranslateMessage(ref MSG lpMsg);
 		private HandleTranslateMessage _translateMessageFunc;
 		private delegate int HandleUpdateWindow(IntPtr IntPtr);
 		private HandleUpdateWindow _updateWindowFunc;
-		
+
 		private User32()
 			: base("User32.dll")
 		{
@@ -44,9 +50,12 @@ namespace RunTime.Windows.Win32
 			_getMessageFunc = LoadFunction<HandleGetMessage>("GetMessageW");
 			_invalidateRectFunc = LoadFunction<HandleInvalidateRect>("InvalidateRect");
 			_loadCursorFunc = LoadFunction<HandleLoadCursor>("LoadCursorW");
+			_loadIconFunc = LoadFunction<HandleLoadIcon>("LoadIconW");
+			_messageBoxFunc = LoadFunction<HandleMessageBox>("MessageBoxW");
 			_peekMessageFunc = LoadFunction<HandlePeekMessage>("PeekMessageW");
 			_postQuitMessageFunc = LoadFunction<HandlePostQuitMessage>("PostQuitMessage");
 			_registerClassExFunc = LoadFunction<HandleRegisterClassEx>("RegisterClassExW");
+			_setWindowTextFunc = LoadFunction<HandleSetWindowText>("SetWindowTextW");
 			_showWindowFunc = LoadFunction<HandleShowWindow>("ShowWindow");
 			_translateMessageFunc = LoadFunction<HandleTranslateMessage>("TranslateMessage");
 			_updateWindowFunc = LoadFunction<HandleUpdateWindow>("UpdateWindow");
@@ -93,6 +102,26 @@ namespace RunTime.Windows.Win32
 			return _instance._getMessageFunc(ref lpMsg, IntPtr, wMsgFilterMin, wMsgFilterMax);
 		}
 
+		public static int GET_X_LPARAM(int lParam)
+		{
+			return (lParam & 0xffff);
+		}
+
+		public static int GET_Y_LPARAM(int lParam)
+		{
+			return (lParam >> 16);
+		}
+
+		public static ushort HIWORD(int value)
+		{
+			return HIWORD((uint)value);
+		}
+
+		public static ushort HIWORD(uint value)
+		{
+			return (ushort)(value >> 16);
+		}
+
 		public static int InvalidateRect(IntPtr hwnd, ref RECT lpRect, int bErase)
 		{
 			return _instance._invalidateRectFunc(hwnd, ref lpRect, bErase);
@@ -101,6 +130,36 @@ namespace RunTime.Windows.Win32
 		public static IntPtr LoadCursor(IntPtr hInstance, int lpCursorName)
 		{
 			return _instance._loadCursorFunc(hInstance, lpCursorName);
+		}
+
+		public static IntPtr LoadIcon(IntPtr hInstance, int lpIconName)
+		{
+			return _instance._loadIconFunc(hInstance, lpIconName);
+		}
+
+		public static ushort LOWORD(int value)
+		{
+			return (ushort)(value & 0xFFFF);
+		}
+
+		public static ushort LOWORD(uint value)
+		{
+			return (ushort)(value & 0xFFFF);
+		}
+
+		public static IntPtr MakeLResult(short lowPart, short highPart)
+		{
+			return (IntPtr)MakeLong(lowPart, highPart);
+		}
+
+		public static int MakeLong(short lowPart, short highPart)
+		{
+			return (int)(((ushort)lowPart) | (uint)(highPart << 16));
+		}
+
+		public static int MessageBox(IntPtr hwnd, string lpText, string lpCaption, int wType)
+		{
+			return _instance._messageBoxFunc(hwnd, lpText, lpCaption, wType);
 		}
 
 		public static int PeekMessage(ref MSG lpMsg, IntPtr hwnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg)
@@ -116,6 +175,11 @@ namespace RunTime.Windows.Win32
 		public static ushort RegisterClassEx(ref WNDCLASSEX pcWndClassEx)
 		{
 			return _instance._registerClassExFunc(ref pcWndClassEx);
+		}
+
+		public static int SetWindowText(IntPtr hwnd, string lpString)
+		{
+			return _instance._setWindowTextFunc(hwnd, lpString);
 		}
 
 		public static void ShowWindow(IntPtr window)
@@ -1442,8 +1506,10 @@ namespace RunTime.Windows.Win32
 		public const int WM_ENDSESSION = 0x16;
 		public const int WM_ENTERIDLE = 0x121;
 		public const int WM_ENTERMENULOOP = 0x211;
+		public const int WM_ENTERSIZEMOVE = 0x0231;
 		public const int WM_ERASEBKGND = 0x14;
 		public const int WM_EXITMENULOOP = 0x212;
+		public const int WM_EXITSIZEMOVE = 0x0232;
 		public const int WM_FONTCHANGE = 0x1D;
 		public const int WM_GETDLGCODE = 0x87;
 		public const int WM_GETFONT = 0x31;
